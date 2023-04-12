@@ -1,7 +1,7 @@
 # Golang serverless framework
 
 ## Description
-This is a serverless framework for golang. It uses the [aws sam cli](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) to deploy the application to aws lambda. It also uses [terraform](https://www.terraform.io/) to deploy the infrastructure to aws. The application is built using [golang](https://golang.org/) and [aws lambda go](https://docs.aws.amazon.com/lambda/latest/dg/go-programming-model.html). The database is [dynamodb](https://aws.amazon.com/dynamodb/).
+Golang serverless framework is a framework for building serverless applications using golang.
 
 ## Requirements
 - [terraform](https://www.terraform.io/downloads.html)
@@ -9,7 +9,6 @@ This is a serverless framework for golang. It uses the [aws sam cli](https://doc
 - [golang](https://golang.org/doc/install)
 - [docker](https://docs.docker.com/get-docker/)
 - [docker-compose](https://docs.docker.com/compose/install/)
-- [sam-cli](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 
 ## Environment variables
 ```shell
@@ -36,3 +35,23 @@ Run docker compose to start dynamodb locally
 ```bash
 docker-compose up -d
 ```
+
+## Roadmap
+- [x] lambda using api gateway
+- [x] lambda using dynamodb
+- [ ] terraform for dynamodb and lambda
+- [ ] lambda using cloudwatch events, logs, alarms, metrics
+- [ ] Service layer
+- [ ] unit tests
+- [ ] Run locally mode
+- [ ] lambda using s3
+- [ ] lambda using sqs
+- [ ] lambda using sns
+- [ ] lambda using ses
+- [ ] lambda using step functions
+- [ ] implement x-ray
+- [ ] lambda using ssm
+- [ ] lambda using secrets manager
+- [ ] lambda using cognito
+- [ ] aws chat bot
+    
