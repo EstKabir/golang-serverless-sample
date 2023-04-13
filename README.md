@@ -12,7 +12,7 @@ Golang serverless framework is a framework for building serverless applications 
 
 ## Environment variables
 ```shell
-FUNCTION_NAME=TODO_API;DATABASE_URL=http://localhost:8000
+FUNCTION_NAME=todo_api;DATABASE_URL=http://localhost:8000
 _LAMBDA_SERVER_PORT=9000;AWS_LAMBDA_RUNTIME_API=http://localhost:9001
 
 ```
@@ -29,6 +29,18 @@ The port to run the lambda server on. This is only used when running the lambda 
 ### AWS_LAMBDA_RUNTIME_API (only local)
 The url of the lambda runtime api. This is only used when running the lambda server locally.
 
+## terraform
+Run terraform to deploy the lambda function to aws and other resources.
+
+### start project
+```bash
+terraform init
+```
+
+```bash
+terraform plan
+terraform apply
+```
 
 ## DynamoDb 
 Run docker compose to start dynamodb locally

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	todoApi string = "TODO_API"
+	todoApi string = "todo_api"
 )
 
 func StartFunctions(config config.Config) {

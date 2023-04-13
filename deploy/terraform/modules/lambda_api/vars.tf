@@ -1,0 +1,9 @@
+variable "project_name" {}
+variable "project_version" {}
+variable "function_name" {}
+variable "environment" {}
+variable "aws_region" {}
+variable "deploy_bucket" {}
+variable "deploy_file" {}
+variable "aws_iam_policy_todo_table_read_dynamo_arn" {}
+variable "aws_iam_policy_todo_table_write_dynamo_arn" {}

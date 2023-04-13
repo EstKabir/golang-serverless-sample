@@ -1,12 +1,21 @@
-APP_BINARY_FILE=build/app.out
-APP_MAIN_FILE=src/main.go
+PKG=./src
+VERSION := $(shell git describe --always --long)
+OUT=build/app.v.${VERSION}
+GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
+PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 
 run_build:
-	./${APP_BINARY_FILE}
+	./${OUT}
 build_app:
-	go build -o ${APP_BINARY_FILE} ${APP_MAIN_FILE}
+	go build -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
 run:
-	go run ${APP_MAIN_FILE}
+	go run ${PKG}
+test:
+	@go test -short ${PKG_LIST}
+lint:
+	@for file in ${GO_FILES} ;  do \
+		golint $$file ; \
+	done
 clean:
 	go clean
-	rm ${APP_BINARY_FILE}
+	rm ${OUT}
