@@ -5,7 +5,7 @@ variable "project_name" {
 
 variable "project_version" {
   type    = string
-  default = "0.0.1"
+  default = "0.0.2"
 }
 
 variable "aws_region" {
@@ -15,5 +15,5 @@ variable "aws_region" {
 
 variable "deploy_source_file" {
   type    = string
-  default = "app.v.3a412e9"
+  default = "app.v.051e4e3"
 }

@@ -7,7 +7,7 @@ PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 run_build:
 	./${OUT}
 build_app:
-	go build -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
 run:
 	go run ${PKG}
 test:

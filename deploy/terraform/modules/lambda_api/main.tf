@@ -2,10 +2,10 @@
 resource "aws_lambda_function" "lambda" {
   function_name = "${var.project_name}-${var.function_name}-${var.environment}"
   role          = aws_iam_role.iam_role_lambda.arn
-  handler       = "main"
+  handler       = var.deploy_file
   runtime       = "go1.x"
   s3_bucket     = var.deploy_bucket
-  s3_key        = var.deploy_file
+  s3_key        = "${var.deploy_file}.zip"
   memory_size   = 256
 
   environment {

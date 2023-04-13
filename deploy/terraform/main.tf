@@ -34,7 +34,7 @@ module "lambda_api_todo_dev" {
   aws_region                                      = var.aws_region
   function_name                                   = "todo_api"
   deploy_bucket = module.s3_deploy_dev.aws_s3_bucket_name
-  deploy_file = "${var.deploy_source_file}.zip"
+  deploy_file = var.deploy_source_file
   aws_iam_policy_todo_table_read_dynamo_arn = module.dynamo_db_todo_dev.aws_iam_policy_table_read_dynamo_arn
   aws_iam_policy_todo_table_write_dynamo_arn = module.dynamo_db_todo_dev.aws_iam_policy_table_write_dynamo_arn
 }
