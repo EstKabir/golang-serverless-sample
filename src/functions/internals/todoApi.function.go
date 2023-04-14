@@ -6,23 +6,22 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"golang-serverless-sample/src/config"
 	"golang-serverless-sample/src/database/dynamodb"
-	"golang-serverless-sample/src/domain/todo"
+	"golang-serverless-sample/src/domain/todoDomain"
+	"golang-serverless-sample/src/services"
 	"net/http"
 	"regexp"
 )
 
 type TodoApiFunction struct {
-	config   config.Config
-	database *dynamodb.TodoDynamoDbRepository
+	config  config.Config
+	service todoDomain.Service
+	path    string
 }
 
 func (function *TodoApiFunction) handleGetTodo(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	// Retrieves the ID from the URL
 	id := req.PathParameters["id"]
-
-	// Fetches the requested Todo
-	getTodo, err := function.database.GetTodo(id)
+	getTodo, err := function.service.FindById(id)
 	if err != nil {
 		fmt.Println(err)
 		return events.APIGatewayProxyResponse{
@@ -31,7 +30,6 @@ func (function *TodoApiFunction) handleGetTodo(req events.APIGatewayProxyRequest
 		}, nil
 	}
 
-	// Marshals the struct so the API Gateway is able to proccess it
 	js, err := json.Marshal(getTodo)
 	if err != nil {
 		fmt.Println(err)
@@ -47,10 +45,10 @@ func (function *TodoApiFunction) handleGetTodo(req events.APIGatewayProxyRequest
 	}, nil
 }
 
-func (function *TodoApiFunction) handleGetTodos(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (function *TodoApiFunction) handleDeleteTodo(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	// Fetches all the Todos
-	todos, err := function.database.GetTodos()
+	id := req.PathParameters["id"]
+	err := function.service.Delete(id)
 	if err != nil {
 		fmt.Println(err)
 		return events.APIGatewayProxyResponse{
@@ -59,7 +57,23 @@ func (function *TodoApiFunction) handleGetTodos(req events.APIGatewayProxyReques
 		}, nil
 	}
 
-	// Marshals the struct so the API Gateway is able to proccess it
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusOK,
+		Body:       "Deleted",
+	}, nil
+}
+
+func (function *TodoApiFunction) handleGetTodos(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+	todos, err := function.service.FindAll()
+	if err != nil {
+		fmt.Println(err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       http.StatusText(http.StatusInternalServerError),
+		}, nil
+	}
+
 	js, err := json.Marshal(todos)
 	if err != nil {
 		fmt.Println(err)
@@ -76,9 +90,7 @@ func (function *TodoApiFunction) handleGetTodos(req events.APIGatewayProxyReques
 }
 
 func (function *TodoApiFunction) handleCreateTodo(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
-	// Unmarshals the request's body
-	var todoModel todo.Model
+	var todoModel todoDomain.Model
 	err := json.Unmarshal([]byte(req.Body), &todoModel)
 	if err != nil {
 		fmt.Println(err)
@@ -88,8 +100,7 @@ func (function *TodoApiFunction) handleCreateTodo(req events.APIGatewayProxyRequ
 		}, nil
 	}
 
-	// Inserts the Todo into the table
-	err = function.database.CreateTodo(todoModel)
+	todoCreated, err := function.service.Create(&todoModel)
 	if err != nil {
 		fmt.Println(err)
 		return events.APIGatewayProxyResponse{
@@ -97,30 +108,32 @@ func (function *TodoApiFunction) handleCreateTodo(req events.APIGatewayProxyRequ
 			Body:       err.Error(),
 		}, nil
 	}
+	js, err := json.Marshal(todoCreated)
+	if err != nil {
+		fmt.Println(err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       http.StatusText(http.StatusInternalServerError),
+		}, nil
+	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusCreated,
-		Body:       "Created",
+		Body:       string(js),
 	}, nil
 }
 
 func (function *TodoApiFunction) Router(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	// Routes the application to the correct handler based in the request's path
-	if req.HTTPMethod == "GET" {
-		hasID, _ := regexp.MatchString("/todos/.+", req.Path)
-		if hasID {
-			return function.handleGetTodo(req)
-		}
-
-		if req.Path == "/todos" {
-			return function.handleGetTodos(req)
-		}
-	}
-	if req.HTTPMethod == "POST" {
-		if req.Path == "/todos" {
-			return function.handleCreateTodo(req)
-		}
+	hasID, _ := regexp.MatchString(function.path+"/.+", req.Path)
+	if req.HTTPMethod == http.MethodGet && hasID {
+		return function.handleGetTodo(req)
+	} else if req.HTTPMethod == http.MethodGet && req.Path == function.path {
+		return function.handleGetTodos(req)
+	} else if req.HTTPMethod == http.MethodPost && req.Path == function.path {
+		return function.handleCreateTodo(req)
+	} else if req.HTTPMethod == http.MethodDelete && hasID {
+		return function.handleDeleteTodo(req)
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -130,12 +143,14 @@ func (function *TodoApiFunction) Router(req events.APIGatewayProxyRequest) (even
 }
 
 func NewTodoApiFunction(config config.Config) (*TodoApiFunction, error) {
-	dynamodbTodo, err := dynamodb.NewTodoRepository(config)
+	todoRepository, err := dynamodb.NewTodoRepository(config)
 	if err != nil {
 		return nil, err
 	}
+	todoService := services.NewTodoService(todoRepository)
 	return &TodoApiFunction{
-		config:   config,
-		database: dynamodbTodo,
+		config:  config,
+		service: todoService,
+		path:    "/todos",
 	}, nil
 }

@@ -1,7 +1,7 @@
-package todo
+package todoDomain
 
 type Model struct {
-	ID          string `json:"id,omitempty"`
+	Id          string `json:"id,omitempty"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }

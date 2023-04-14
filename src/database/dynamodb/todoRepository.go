@@ -8,80 +8,68 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/google/uuid"
 	"golang-serverless-sample/src/config"
-	"golang-serverless-sample/src/domain/todo"
+	"golang-serverless-sample/src/domain/todoDomain"
 )
 
 type TodoDynamoDbRepository struct {
-	Database  *dynamodb.DynamoDB
-	TableName string
+	database  *dynamodb.DynamoDB
+	tableName string
 }
 
-// GetTodo retrieves one Todo from the DB based on its ID
-func (repository *TodoDynamoDbRepository) GetTodo(uuid string) (todo.Model, error) {
+func (repository *TodoDynamoDbRepository) GetById(id string) (*todoDomain.Model, error) {
 
-	// Prepares the input to retrieve the item with the given ID
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(repository.TableName),
+		TableName: aws.String(repository.tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
-				S: aws.String(uuid),
+				S: aws.String(id),
 			},
 		},
 	}
 
-	// Retrieves the item
-	result, err := repository.Database.GetItem(input)
+	result, err := repository.database.GetItem(input)
 	if err != nil {
-		return todo.Model{}, err
+		return nil, err
 	}
 	if result.Item == nil {
-		return todo.Model{}, nil
+		return nil, nil
 	}
 
-	// Unmarshals the object retrieved into a domain struct
-	var todoModel todo.Model
+	var todoModel todoDomain.Model
 	err = dynamodbattribute.UnmarshalMap(result.Item, &todoModel)
 	if err != nil {
-		return todo.Model{}, err
+		return nil, err
 	}
 
-	return todoModel, nil
+	return &todoModel, nil
 }
 
-// GetTodos retrieves all the Todos from the DB
-func (repository *TodoDynamoDbRepository) GetTodos() ([]todo.Model, error) {
+func (repository *TodoDynamoDbRepository) FindAll() (*[]todoDomain.Model, error) {
 
-	// Prepares the input to scan the whole table
 	input := &dynamodb.ScanInput{
-		TableName: aws.String(repository.TableName),
+		TableName: aws.String(repository.tableName),
 	}
-	result, err := repository.Database.Scan(input)
+	result, err := repository.database.Scan(input)
 	if err != nil {
-		return []todo.Model{}, err
-	}
-	if len(result.Items) == 0 {
-		return []todo.Model{}, nil
+		return nil, err
 	}
 
-	// Unmarshals the array retrieved into a domain struct's slice
-	var todos []todo.Model
+	var todos []todoDomain.Model
 	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &todos)
 	if err != nil {
-		return []todo.Model{}, err
+		return nil, err
 	}
 
-	return todos, nil
+	return &todos, nil
 }
 
-// CreateTodo inserts a new Todo item to the table.
-func (repository *TodoDynamoDbRepository) CreateTodo(todo todo.Model) error {
+func (repository *TodoDynamoDbRepository) Create(todo *todoDomain.Model) (*todoDomain.Model, error) {
 
 	// Generates a new random ID
 	id := uuid.New().String()
 
-	// Creates the item that's going to be inserted
 	input := &dynamodb.PutItemInput{
-		TableName: aws.String(repository.TableName),
+		TableName: aws.String(repository.tableName),
 		Item: map[string]*dynamodb.AttributeValue{
 			"id": {
 				S: aws.String(fmt.Sprintf("%v", id)),
@@ -95,20 +83,52 @@ func (repository *TodoDynamoDbRepository) CreateTodo(todo todo.Model) error {
 		},
 	}
 
-	_, err := repository.Database.PutItem(input)
-	return err
+	_, err := repository.database.PutItem(input)
+	if err != nil {
+		return nil, err
+	}
+	todo.Id = id
+	return todo, nil
 }
 
-func NewTodoRepository(config config.Config) (*TodoDynamoDbRepository, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Endpoint: aws.String("http://localhost:8000")},
-	)
-	if err != nil {
-		return &TodoDynamoDbRepository{}, err
+func (repository *TodoDynamoDbRepository) Update(id string, todo *todoDomain.Model) (*todoDomain.Model, error) {
+	panic("implement me")
+}
+
+func (repository *TodoDynamoDbRepository) Delete(id string) error {
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				N: aws.String(id),
+			},
+		},
+		TableName: aws.String(repository.tableName),
 	}
-	// Create DynamoDB client
+	_, err := repository.database.DeleteItem(input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewTodoRepository(config config.Config) (todoDomain.Repository, error) {
+	var dynamoSess *session.Session
+	if config.Database.Url == "" {
+		dynamoSess = session.Must(session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		}))
+	} else {
+		sess, err := session.NewSession(&aws.Config{
+			Endpoint: aws.String(config.Database.Url)},
+		)
+		if err != nil {
+			return nil, err
+		}
+		dynamoSess = sess
+	}
+
 	return &TodoDynamoDbRepository{
-		Database:  dynamodb.New(sess),
-		TableName: "go-serverless-api",
+		database:  dynamodb.New(dynamoSess),
+		tableName: "go-serverless-api",
 	}, nil
 }
