@@ -62,6 +62,10 @@ resource "aws_iam_policy" "table_write_policy" {
   })
 }
 
+output "aws_dynamodb_table_name" {
+  value = aws_dynamodb_table.table.name
+}
+
 output "aws_iam_policy_table_read_dynamo_arn" {
   value = aws_iam_policy.table_read_policy.arn
 }

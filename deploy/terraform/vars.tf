@@ -15,5 +15,5 @@ variable "aws_region" {
 
 variable "deploy_source_file" {
   type    = string
-  default = "app.v.051e4e3"
+  default = "app.v.4c3b22d"
 }

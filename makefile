@@ -18,4 +18,4 @@ lint:
 	done
 clean:
 	go clean
-	rm ${OUT}
+	rm build/app.*

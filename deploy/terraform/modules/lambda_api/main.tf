@@ -11,6 +11,7 @@ resource "aws_lambda_function" "lambda" {
   environment {
     variables = {
       FUNCTION_NAME = var.function_name
+      ENVIRONMENT = var.environment
     }
   }
 

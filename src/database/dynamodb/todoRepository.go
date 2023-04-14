@@ -129,6 +129,6 @@ func NewTodoRepository(config config.Config) (todoDomain.Repository, error) {
 
 	return &TodoDynamoDbRepository{
 		database:  dynamodb.New(dynamoSess),
-		tableName: "go-serverless-api",
+		tableName: config.ProjectName + "-todo-" + config.Environment,
 	}, nil
 }
